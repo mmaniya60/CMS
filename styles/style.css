@@ -1,0 +1,36 @@
+body{
+    padding-top: 100px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.container{
+    width: 500px;
+    margin: 0 auto;
+}
+
+a:link, a:visited{
+    color: slategrey;
+    text-decoration: none;
+}
+
+a:hover{
+    color: #444;
+}
+
+small{
+    color: #999;
+    font-style: italic;
+}
+
+p{
+    line-height: 30px;
+}
+
+form.search{
+    text-align: end;
+    margin: 10px;
+}
+
+form.search input{
+    block-size: 35px;
+}
