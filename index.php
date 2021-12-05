@@ -4,8 +4,21 @@
 	include_once('includes/connect.php');
 	include_once('includes/post.php');
 
-	$post = new Post;
-	$posts = $post->fetch_all();
+	$limit = 3;
+
+	if(isset($_GET['page'])){
+		$page = $_GET['page'];
+	}
+	else{
+		$page = 1;
+	}
+
+	$offset = ($page - 1) * $limit;
+
+	$query = $db->prepare("SELECT * FROM post ORDER BY post_id DESC LIMIT {$offset}, {$limit}");
+    
+	$query->execute();
+    	$posts = $query->fetchAll();
 
 	if(isset($_GET['cid'])){
 		$cid = $_GET['cid'];
@@ -99,5 +112,51 @@
 			<?php endforeach ?>
 		</ul>
 	</div>
+	
+		<?php
+
+		$query1 = $db->prepare("SELECT * FROM post");
+		$query1->execute();
+		$query1->fetchAll();
+		
+		$post_count = $query1->rowCount();
+
+
+		if($post_count > 0){
+
+			$total_posts = $post_count;
+			$total_page = ceil($total_posts / $limit);
+
+	?>
+
+	<ul class="pagination">
+
+		<?php if($page > 1): ?>
+            <li><a href="index.php?page=<?= $page - 1 ?>">&larr;</a></li>
+        <?php endif ?>
+
+		<?php for($i = 1; $i <= $total_page; $i++): ?>
+			<?php 
+				if($i == $page){
+					$active = "active";
+				}
+				else{
+					$active = "";
+				}
+			?>
+			
+			<li class="<?= $active ?>"><a href="index.php?page=<?= $i ?>&sid=<?= $sid ?>"><?= $i ?></a></li>
+		<?php endfor ?>
+
+		<?php if($page < $total_page): ?>
+            <li><a href="index.php?page=<?= $page + 1 ?>">&rarr;</a></li>
+        <?php endif ?>
+	</ul>
+
+	<?php
+
+		}
+
+	?>
 </body>
 </html>
