@@ -18,16 +18,44 @@
 	$query = $db->prepare("SELECT * FROM post ORDER BY post_id DESC LIMIT {$offset}, {$limit}");
     
 	$query->execute();
-    	$posts = $query->fetchAll();
+    $posts = $query->fetchAll();
+
+	$name = "Sort by";
 
 	if(isset($_GET['cid'])){
 		$cid = $_GET['cid'];
 	}
-	
-	$query = $db->prepare("SELECT * FROM genre WHERE post > 0");
 
-	$query->execute();
-	$genres = $query->fetchAll();
+	if((isset($_SESSION['logged_in']) || isset($_SESSION['user_login'])) && isset($_GET['sid'])){
+		$sid = $_GET['sid'];
+
+		if($sid == '1'){
+			$name = "Sort by: Title";
+			$query1 = $db->prepare("SELECT * FROM post ORDER BY movie_title ASC LIMIT {$offset}, {$limit}");
+
+			$query1->execute();
+			$posts = $query1->fetchAll();
+		}
+		else if($sid == '2'){
+			$name = "Sort by: Date Posted";
+			$query1 = $db->prepare("SELECT * FROM post ORDER BY posted_on ASC LIMIT {$offset}, {$limit}");
+
+			$query1->execute();
+			$posts = $query1->fetchAll();
+		}
+		else if($sid == '3'){
+			$name = "Sort by: Latest Released";
+			$query1 = $db->prepare("SELECT * FROM post ORDER BY movie_year DESC LIMIT {$offset}, {$limit}");
+
+			$query1->execute();
+			$posts = $query1->fetchAll();
+		}
+	}
+
+	$query2 = $db->prepare("SELECT * FROM genre WHERE post > 0");
+
+	$query2->execute();
+	$genres = $query2->fetchAll();
 
 
 	$value = '';
@@ -54,7 +82,7 @@
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Home - Movie CMS</title>
+	<title>Movie CMS - Home</title>
 	<link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
@@ -71,21 +99,32 @@
             </div>
 		</div>
 
+		<?php if(isset($_SESSION['logged_in']) || isset($_SESSION['user_login'])): ?>
+			<div class="w3-dropdown-hover w3-mobile">
+				<button class="w3-button"><?= $name ?><em class="fa fa-caret-down"></em></button>
+				<div class="w3-dropdown-content w3-bar-block w3-black">
+					<a href="index.php?sid=1" class="w3-bar-item w3-button w3-mobile" >Title</a>
+					<a href="index.php?sid=2" class="w3-bar-item w3-button w3-mobile" >Date Posted</a>
+					<a href="index.php?sid=3" class="w3-bar-item w3-button w3-mobile" >Latest Released</a>
+				</div>
+			</div>
+		<?php endif ?>
+
 		<?php if((isset($_SESSION['logged_in'])) || (isset($_SESSION['user_login']))): ?>
-			<a href="<?= $action ?>" onclick="<?php $click ?>" class="w3-bar-item w3-button w3-green w3-right"><?= $value ?></a>
+			<a href="<?= $action ?>" class="w3-bar-item w3-button w3-green w3-right"><?= $value ?></a>
 		<?php else: ?>
-			<a href="admin/users/add_users.php" onclick="<?php $click ?>" class="w3-bar-item w3-button w3-green w3-right">Sign Up</a>
-			<a href="<?= $action ?>" onclick="<?php $click ?>" class="w3-bar-item w3-button w3-green w3-right"><?= $value ?></a>
+			<a href="admin/users/add_users.php" class="w3-bar-item w3-button w3-green w3-right">Sign Up</a>
+			<a href="<?= $action ?>" class="w3-bar-item w3-button w3-green w3-right"><?= $value ?></a>
 		<?php endif ?>
 	</div>
 
-	<form class="search" action="search.php?search=" method="get" autocomplete="off">
-		<input type="text" name="search" placeholder="Search...">
+	<form class="search" action="search.php" method="get" autocomplete="off">
+		<input type="text" name="search" placeholder="Search by Title...">
 		<button type="submit" class="w3-bar-item w3-button w3-green">Go</button>
 	</form>
 
 	<div class="container">
-		<h1><b>Latest Movie Reviews</b></h1>
+		<h1><b>Movie Reviews</b></h1>
 		<ul style="list-style-type:none;">
 			<?php foreach ($posts as $post): ?>
 				<li>
@@ -112,8 +151,8 @@
 			<?php endforeach ?>
 		</ul>
 	</div>
-	
-		<?php
+
+	<?php
 
 		$query1 = $db->prepare("SELECT * FROM post");
 		$query1->execute();
@@ -158,5 +197,6 @@
 		}
 
 	?>
+
 </body>
 </html>
