@@ -31,8 +31,18 @@
                 $query->execute();
                 header("Location: show.php?id=$post_id");
             }
+		
         }
+	
+	if(isset($_GET['did'])){
+        $did = $_GET['did'];
 
+        $query1 = $db->prepare("DELETE FROM comment WHERE comment_id=?");
+        $query1->bindValue(1, $did);
+
+        $query1->execute();
+
+        header("Location: show.php?id=$post_id");
 
 ?>
 
@@ -74,6 +84,9 @@
                         by -
                         <?= $comment['name'] ?> on 
                         <?= date("F d, Y, h:i a", strtotime($comment['comment_time']))?>
+			<?php if(isset($_SESSION['logged_in'])): ?>
+                            <a href="comments.php?id=<?= $_GET['id'] ?>&did=<?= $comment['comment_id'] ?>">delete</a>
+                        <?php endif ?>
                     </small>
                 </li>
                 <li><?= $comment['comments'] ?></li>
