@@ -4,6 +4,23 @@
 	include_once('includes/connect.php');
 	include_once('includes/post.php');
 
+	$limit = 2;
+
+    if(isset($_GET['search']) && isset($_GET['page'])){
+        $search = $_GET['search'];
+        $page = $_GET['page'];
+    }
+    else{
+        $search = $_GET['search'];
+        $page = 1;
+    }
+
+            
+    $offset = ($page - 1) * $limit;
+
+    $post = new Post;
+    $posts = $post->fetch_search_term($search, $offset, $limit);
+
     if(isset($_GET['search'])){
         $search = $_GET['search'];
 
@@ -110,5 +127,54 @@
             </ul>
         <?php endif ?>
 	</div>
+	
+	<?php
+
+        $search = $_GET['search'];
+        $query1 = $db->prepare("SELECT * FROM post
+                                WHERE movie_title LIKE '%{$search}%'");
+        $query1->execute();
+        $query1->fetchAll();
+
+        $post_count = $query1->rowCount();
+
+
+        if($post_count > 0){
+
+            $total_posts = $post_count;
+            $total_page = ceil($total_posts / $limit);
+
+        ?>
+
+       
+            <ul class="pagination">
+                <?php if($page > 1): ?>
+                    <li><a href="search.php?search=<?= $search ?>&page=<?= $page - 1 ?>">&larr;</a></li>
+                <?php endif ?>
+
+                <?php for($i = 1; $i <= $total_page; $i++): ?>
+                    <?php 
+                    
+                        if($i == $page){
+                            $active = "active";
+                        }
+                        else{
+                            $active = "";
+                    }
+                    ?>
+                    
+                    <li class="<?= $active ?>"><a href="search.php?search=<?= $search ?>&page=<?= $i ?>"><?= $i ?></a></li>
+                <?php endfor ?>
+                
+                <?php if($page < $total_page): ?>
+                    <li><a href="search.php?search=<?= $search ?>&page=<?= $page + 1 ?>">&rarr;</a></li>
+                <?php endif ?>
+            </ul>
+    <?php
+
+        }
+
+    ?>
+	
 </body>
 </html>
