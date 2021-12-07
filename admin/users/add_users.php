@@ -6,8 +6,8 @@
     if(isset($_POST['save'])){
         $name = $_POST['name'];
         $username = $_POST['user'];
-        $password = md5($_POST['password']);
-        $password1 = md5($_POST['password1']);
+        $password = $_POST['password'];
+        $password1 = $_POST['password1'];
         $email = $_POST['email'];
 
         if(empty($name) || empty($username) || empty($password) || empty($password1) || empty($email)){
@@ -31,7 +31,7 @@
                 $query1 = $db->prepare("INSERT INTO user (username, password, full_name, email) VALUES (?, ?, ?, ?)");
                 
                 $query1->bindValue(1, $username);
-                $query1->bindValue(2, $password);
+                $query1->bindValue(2, password_hash($password, PASSWORD_DEFAULT));
                 $query1->bindValue(3, $name);
                 $query1->bindValue(4, $email);
 
