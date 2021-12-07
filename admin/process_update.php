@@ -102,7 +102,8 @@
                     <option value="<?= $genre['genre_id'] ?>"><?= $genre['genres'] ?></option>
                 <?php endforeach ?>
             </select><br /><br />
-            <textarea class="w3-input w3-border" rows="20" cols="50" type="text" name="description"><?= $data['movie_description'] ?></textarea><br /><br />
+            <label>Movie Description:</label><br />
+            <textarea id="description" name="description"><?= $data['movie_description'] ?></textarea><br /><br />
             <input type="file" name="image" />  <br /> <br /> 
             <p><?= $data['movie_image'] ?></p>
             <img src="uploads/<?= $data['movie_image'] ?>" alt="<?= $data['movie_image'] ?>" height="150px" />
@@ -113,6 +114,12 @@
         <br /><br />
         <a href="update.php">&larr; Back</a>
     </div>
+
+    <script src="ckeditor/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('description');
+    </script>
+
 </body>
 </html>
 
