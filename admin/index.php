@@ -31,7 +31,7 @@
             <li><a href="update.php">Update a Movie Review</a></li>
             <li><a href="delete.php">Delete a Movie Review</a></li>
             <li><a href="categories.php">Add or Update Genres</a></li>
-            <li><a href="manage_users.php">Manage Users</a></li>
+            <li><a href="users/manage_users.php">Manage Users</a></li>
             <li><a href="logout.php" onclick="return confirm('Are you sure?')">Logout</a></li>
 
         </ul>
@@ -74,39 +74,39 @@
 <?php
     }
     else{
-        if(isset($_POST['username']) && isset($_POST['password'])){
-            $username = $_POST['username'];
-            $password = md5($_POST['password']);
+            if(isset($_POST['username']) && isset($_POST['password'])){
+                $username = $_POST['username'];
+                $password = $_POST['password'];
 
-            if(empty($username) || empty($password)){
-                $error = "All fields are required!";
-            }
-            else{
-                $query = $db->prepare("SELECT * FROM user WHERE username = ? AND password = ?");
-                $query->bindValue(1, $username);
-                $query->bindValue(2, $password);
-
-                $query->execute();
-                $data = $query->fetch();
-                $num = $query->rowCount();
-
-                if($num == 1 && $data['role'] == "1"){
-                    $_SESSION['logged_in'] = $username;
-                    echo '<h3>Admin Login Successful</h3><br /> <p>Please wait until we redirect you to the dashbord.</p>';
-                    header("refresh:3;url=index.php");
-                    exit();
-                }
-                else if($num == 1 && $data['role'] == "0"){
-                    $_SESSION['user_login'] = $username;
-                    echo '<h3>User Login Successful</h3><br /> <p>Please wait until we redirect you to the dashbord.</p>';
-                    header("refresh:3;url=index.php");
-                    exit();
+                if(empty($username) || empty($password)){
+                    $error = "All fields are required!";
                 }
                 else{
-                    $error = "Incorrect details!";
+                    $query = $db->prepare("SELECT * FROM user WHERE username = ?");
+                    $query->bindValue(1, $username);
+
+                    $query->execute();
+                    $data = $query->fetch();
+
+                    if(password_verify($password, $data['password'])){
+                        if($data['role'] == "1"){
+                            $_SESSION['logged_in'] = $username;
+                            echo '<h3>Admin Logged in Successfully</h3><br /> <p>Please wait until we redirect you to the dashbord.</p>';
+                            header("refresh:3;url=index.php");
+                            exit();
+                        }
+                        else if($data['role'] == "0"){
+                            $_SESSION['user_login'] = $username;
+                            echo '<h3>User Logged in Successfully</h3><br /> <p>Please wait until we redirect you to the dashbord.</p>';
+                            header("refresh:3;url=index.php");
+                            exit();
+                        }
+                    }
+                    else{
+                        $error = "Incorrect details!";
+                    }
                 }
             }
-        }
 ?>
 
 <!DOCTYPE html>
