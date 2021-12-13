@@ -6,8 +6,14 @@
 
 	$limit = 3;
 
+	$header = "HTTP/1.0 404 Not Found";
+
 	if(isset($_GET['page'])){
-		$page = $_GET['page'];
+		$page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
+    	if (!$page || empty($page)) {
+        	header($header);
+        	exit;
+    	}
 	}
 	else{
 		$page = 1;
@@ -22,28 +28,30 @@
 
 	$name = "Sort by";
 
-	if(isset($_GET['cid'])){
-		$cid = $_GET['cid'];
-	}
+	if((isset($_SESSION['logged_in']) || isset($_SESSION['user_login'])) && isset($_GET['sid'], $_GET['slug'])){
+		$sid = filter_input(INPUT_GET, 'sid', FILTER_VALIDATE_INT);
+		$slug = filter_input(INPUT_GET, 'slug', FILTER_SANITIZE_STRING);
 
-	if((isset($_SESSION['logged_in']) || isset($_SESSION['user_login'])) && isset($_GET['sid'])){
-		$sid = $_GET['sid'];
+    	if (!$sid || !$slug || empty($sid) || empty($slug)) {
+        	header($header);
+        	exit;
+    	}
 
-		if($sid == '1'){
+		if($sid == '1' && $slug == 'title'){
 			$name = "Sort by: Title";
 			$query1 = $db->prepare("SELECT * FROM post ORDER BY movie_title ASC LIMIT {$offset}, {$limit}");
 
 			$query1->execute();
 			$posts = $query1->fetchAll();
 		}
-		else if($sid == '2'){
+		else if($sid == '2' && $slug == 'date-posted'){
 			$name = "Sort by: Date Posted";
 			$query1 = $db->prepare("SELECT * FROM post ORDER BY posted_on ASC LIMIT {$offset}, {$limit}");
 
 			$query1->execute();
 			$posts = $query1->fetchAll();
 		}
-		else if($sid == '3'){
+		else if($sid == '3' && $slug == 'latest-released'){
 			$name = "Sort by: Latest Released";
 			$query1 = $db->prepare("SELECT * FROM post ORDER BY movie_year DESC LIMIT {$offset}, {$limit}");
 
@@ -94,7 +102,7 @@
             <button class="w3-button">Genres <em class="fa fa-caret-down"></em></button>
             <div class="w3-dropdown-content w3-bar-block w3-black">
                 <?php foreach ($genres as $genre): ?>
-                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
+                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>&slug=<?= $genre['genre_slug'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
                 <?php endforeach ?>
             </div>
 		</div>
@@ -103,9 +111,9 @@
 			<div class="w3-dropdown-hover w3-mobile">
 				<button class="w3-button"><?= $name ?><em class="fa fa-caret-down"></em></button>
 				<div class="w3-dropdown-content w3-bar-block w3-black">
-					<a href="index.php?sid=1" class="w3-bar-item w3-button w3-mobile" >Title</a>
-					<a href="index.php?sid=2" class="w3-bar-item w3-button w3-mobile" >Date Posted</a>
-					<a href="index.php?sid=3" class="w3-bar-item w3-button w3-mobile" >Latest Released</a>
+					<a href="index.php?sid=1&slug=title" class="w3-bar-item w3-button w3-mobile" >Title</a>
+					<a href="index.php?sid=2&slug=date-posted" class="w3-bar-item w3-button w3-mobile" >Date Posted (old to new)</a>
+					<a href="index.php?sid=3&slug=latest-released" class="w3-bar-item w3-button w3-mobile" >Latest Released (latest to oldest)</a>
 				</div>
 			</div>
 		<?php endif ?>
@@ -128,7 +136,7 @@
 		<ul style="list-style-type:none;">
 			<?php foreach ($posts as $post): ?>
 				<li>
-					<h2><a href="show.php?id=<?=$post['post_id']?>"><?= $post['movie_title'] ?></a></h2>
+					<h2><a href="show.php?id=<?=$post['post_id']?>&slug=<?=$post['movie_slug']?>"><?= $post['movie_title'] ?></a></h2>
 				</li>
 				<li>
 				<small>
@@ -138,7 +146,7 @@
 				</li>
 				<?php if(strlen($post['movie_description']) > 200): ?>
 					<li>
-						<?= substr($post['movie_description'], 0, 200)?>...<a href="show.php?id=<?=$post['post_id']?>">Read more</a>
+						<?= substr($post['movie_description'], 0, 200)?>...<a href="show.php?id=<?=$post['post_id']?>&slug=<?=$post['movie_slug']?>">Read more</a>
 					</li>
 				<?php else: ?>
 					<li><?= $post['movie_description'] ?></li>
@@ -184,7 +192,12 @@
 				}
 			?>
 			
-			<li class="<?= $active ?>"><a href="index.php?page=<?= $i ?>&sid=<?= $sid ?>"><?= $i ?></a></li>
+			<?php if(isset($_GET['sid'])): ?>
+				<li class="<?= $active ?>"><a href="index.php?page=<?= $i ?>&sid=<?= $sid ?>"><?= $i ?></a></li>
+			<?php else: ?>
+				<li class="<?= $active ?>"><a href="index.php?page=<?= $i ?>"><?= $i ?></a></li>
+			<?php endif ?>
+		
 		<?php endfor ?>
 
 		<?php if($page < $total_page): ?>
@@ -195,7 +208,10 @@
 	<?php
 
 		}
-
+		if($page > $total_page){
+			header($header);
+        	exit;
+		}
 	?>
 
 </body>
