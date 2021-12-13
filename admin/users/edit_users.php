@@ -3,35 +3,40 @@
 session_start();
 
 include_once('../../includes/connect.php');
+include_once('../../includes/post.php');
 
+$user = new Post;
 
     if(isset($_SESSION['logged_in'])){
         if(isset($_GET['id'])){
 
-            $id = $_GET['id'];
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if (!$id || empty($id)) {
+                echo '<script>alert("Incorrect has been ID passed!!!")</script>';
+                exit;
+            }
 
-            $query = $db->prepare("SELECT * FROM user WHERE user_id = ?");
-            $query->bindValue(1, $id);
-            $query->execute();
-            $users = $query->fetch();
+            $users = $user->fetch_user($id);
         }
 
             if(isset($_POST['username'], $_POST['username'], $_POST['fullname'], $_POST['email'])){
 
-                $id = $_POST['id'];
-                $username = $_POST['username'];
-                $fullname = $_POST['fullname'];
-                $email = $_POST['email'];
-                $role = $_POST['role'];
+                $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+                $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+                $fullname = filter_input(INPUT_POST, 'fullname', FILTER_SANITIZE_STRING);
+                $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+                $role = filter_input(INPUT_POST, 'role', FILTER_VALIDATE_INT);
 
 
                 if(empty($username) || empty($fullname) || empty($email)){
                     $error = "All fields are required!";
 
-                    $query = $db->prepare("SELECT * FROM user WHERE user_id = ?");
-                    $query->bindValue(1, $id);
-                    $query->execute();
-                    $users = $query->fetch();
+                    $users = $user->fetch_user($id);
+                }
+                else if(filter_var($email, FILTER_VALIDATE_EMAIL) === false){
+                    $error = "Incorrect email format! Please retry.";
+                    
+                    $users = $user->fetch_user($id);
                 }
                 else{
                     $query1 = $db->prepare("UPDATE user SET username=?, full_name=?, email=?, role=? WHERE user_id = ?;");
@@ -80,9 +85,21 @@ include_once('../../includes/connect.php');
             <input class="w3-input" type="text" name="username" value="<?= $users['username'] ?>" /><br /><br />
             <input class="w3-input" type="text" name="fullname" value="<?= $users['full_name'] ?>" /><br /><br />
             <input class="w3-input" type="text" name="email" value="<?= $users['email'] ?>" /><br /><br />
+            <?php 
+                if($users['role'] == 0){
+                    $role = "User";
+                    $role1 = "Admin";
+                    $value = "1";
+                }
+                else{
+                    $role = "Admin";
+                    $role1 = "User";
+                    $value = "0";
+                }
+            ?>
             <select class="w3-select" name="role">
-                <option value="0" selected>User</option>
-                <option value="1">Admin</option>
+                <option value="<?= $value ?>" selected><?= $role ?></option>
+                <option value="<?= $value ?>"><?= $role1 ?></option>
             </select><br /><br />
             <input class="w3-button w3-green" type="submit" value="Edit User" />
         </form><br /> <br />
