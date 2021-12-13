@@ -5,7 +5,7 @@
     include_once('../../includes/connect.php');
 
     if(isset($_SESSION['logged_in'])){
-        $query = $db->prepare("SELECT * FROM user WHERE role = 0");
+        $query = $db->prepare("SELECT * FROM user");
 
         $query->execute();
         $users = $query->fetchAll();
@@ -16,7 +16,7 @@
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Add Review</title>
+	<title>Manage Users</title>
 	<link rel="stylesheet" href="../../styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
@@ -41,7 +41,7 @@
                 <section>
                     <div>
                         <h2>All Users</h2>
-                        <a href="add_users.php">Add User &rarr;</a>
+                        <a href="add_users.php">Add User</a>
                         <br /><br />
 
                         <table>
@@ -49,6 +49,7 @@
                                 <tr>
                                     <th>Full Name</th>
                                     <th>User Name</th>
+                                    <th>Role</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
                                 </tr>
@@ -58,6 +59,11 @@
                                     <tr>
                                         <td><?= $user['full_name'] ?></td>
                                         <td><?= $user['username'] ?></td>
+                                        <?php if($user['role'] == 0): ?>
+                                            <td>User</td>
+                                        <?php else: ?>
+                                            <td>Admin</td>
+                                        <?php endif ?>
                                         <td><a href="edit_users.php?id=<?= $user['user_id'] ?>">Edit</a></td>
                                         <td><a href="delete_users.php?id=<?= $user['user_id'] ?>">Delete</a></td>
                                     </tr>
@@ -68,9 +74,6 @@
                 </section>
             </div>
         </main>
-
-        <br /><br />
-        <a href="add_users.php">Add User &rarr;</a>
 
         <br /><br />
         <a href="../index.php">&larr; Back</a>
