@@ -3,7 +3,6 @@
 
     include_once('includes/connect.php');
     include_once('includes/post.php');
-
     
     $query = $db->prepare("SELECT * FROM genre WHERE post > 0");
 
@@ -31,19 +30,34 @@
 
     $post = new Post;
 
-    if(isset($_GET['id'])){
-        $id = $_GET['id'];
-        $data = $post->fetch_data($id);
+    if(isset($_GET['id'], $_GET['slug'])){
+        $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        $slug = filter_input(INPUT_GET, 'slug', FILTER_SANITIZE_STRING);
 
+    	if (!$id || !$slug || empty($id) || empty($slug)) {
+            header("HTTP/1.0 404 Not Found");
+        	exit;
+    	}
+        else{
+            $data = $post->fetch_data($id, $slug);
+            $num = $post->row_count($id, $slug);
+
+            if($num == 0){
+                header("HTTP/1.0 404 Not Found");
+        	    exit;
+            }
+        }
         
 ?>
 <!DOCTYPE html>
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Home - Movie CMS</title>
+	<title><?= $data['movie_title'] ?></title>
 	<link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
 </head>
 <body>
 	<div class="w3-top w3-black">
@@ -53,7 +67,7 @@
             <button class="w3-button">Genres <em class="fa fa-caret-down"></em></button>
             <div class="w3-dropdown-content w3-bar-block w3-black">
                 <?php foreach ($genres as $genre): ?>
-                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
+                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>&slug=<?= $genre['genre_slug'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
                 <?php endforeach ?>
             </div>
 		</div>
@@ -65,8 +79,8 @@
 		<?php endif ?>
 	</div>
     
-	<form class="search" action="search.php?search=" method="get" autocomplete="off">
-		<input type="text" name="search" placeholder="Search...">
+	<form class="search" action="search.php" method="get" autocomplete="off">
+		<input type="text" name="search" placeholder="Search by Title...">
 		<button type="submit" class="w3-bar-item w3-button w3-green">Go</button>
 	</form>
 
@@ -89,7 +103,6 @@
             <?php
                include('comments.php');
              ?>
-
 	</div>
 </body>
 </html>
