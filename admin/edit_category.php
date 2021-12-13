@@ -3,12 +3,17 @@
 session_start();
 
 include_once('../includes/connect.php');
+include_once('../includes/post.php');
 
 
     if(isset($_SESSION['logged_in'])){
         if(isset($_GET['id'])){
 
-            $id = $_GET['id'];
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if (!$id || empty($id)) {
+                echo '<script>alert("Incorrect has been ID passed!!!")</script>';
+                exit;
+            }
 
             $query = $db->prepare("SELECT * FROM genre WHERE genre_id = ?");
             $query->bindValue(1, $id);
@@ -18,8 +23,12 @@ include_once('../includes/connect.php');
 
             if(isset($_POST['genre'])){
 
-                $id = $_POST['id'];
-                $genre = $_POST['genre'];
+                $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+                if (!$id || empty($id)) {
+                    echo '<script>alert("Incorrect has been ID passed!!!")</script>';
+                    exit;
+                }
+                $genre = filter_input(INPUT_POST, 'genre', FILTER_SANITIZE_STRING);
 
                 if(empty($genre)){
                     $error = "Field is required!";
@@ -30,9 +39,12 @@ include_once('../includes/connect.php');
                     $genres = $query->fetch();
                 }
                 else{
-                    $query1 = $db->prepare("UPDATE genre SET genres = ? WHERE genre_id = ?;");
+                    $slug = slug($genre);
+
+                    $query1 = $db->prepare("UPDATE genre SET genres = ?, genre_slug = ? WHERE genre_id = ?;");
                     $query1->bindValue(1, $genre);
-                    $query1->bindValue(2, $id);
+                    $query1->bindValue(2, $slug);
+                    $query1->bindValue(3, $id);
 
                     $query1->execute();
 
