@@ -13,18 +13,25 @@
 
     if(isset($_SESSION['logged_in'])){
         if(isset($_GET['id'])){
-            $id = $_GET['id'];
-
-            $data = $post->fetch_join_data($id);
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if (!$id || empty($id)) {
+                echo '<script>alert("Incorrect has been ID passed!!!")</script>';
+                exit;
+            }
+            else{
+                $data = $post->fetch_join_data($id);
+            }
         }
 
         if(isset($_POST['title'], $_POST['year'], $_POST['description'])){
-            $id = $_POST['id'];
-            $title = $_POST['title'];
-            $description = $_POST['description'];
-            $genre = $_POST['genre'];
-            $year = $_POST['year'];
-            
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+            $title = filter_input(INPUT_POST, 'title', FILTER_SANITIZE_STRING);
+            $description = $_POST['description']; //Can not validate due to the use of WYSIWYG
+            $genre = filter_input(INPUT_POST, 'genre', FILTER_VALIDATE_INT);
+            $year = filter_var($_POST['year'], FILTER_VALIDATE_INT, array("options"=> array("min_range"=>0000, "max_range"=> date('Y'))));
+            $old_img = $_POST['old_image'];
+
+
             if(isset($_FILES['image'])){
                 $file_name = $_FILES['image']['name'];
                 $file_size = $_FILES['image']['size'];
@@ -38,6 +45,11 @@
                 }
             }
 
+            if(isset($_POST['delete'])){
+                $data = $post->fetch_join_data($id);
+                unlink("uploads/".$data['movie_image']);
+            }
+
             if(empty($title) || empty($description) || empty($genre)){
                 $error = "All fields are required!";
                 $data = $post->fetch_join_data($id);
@@ -46,21 +58,50 @@
                 $error = "File extension is not allowed, Please choose an image with JPG or PNG extension.";
                 $data = $post->fetch_join_data($id);
             }
+            else if ($year === false) {
+                $error = "Movie Year is invalid!";
+                $data = $post->fetch_join_data($id);
+            }
             else{
                 
-                $query1 = $db->prepare("UPDATE post SET movie_title=? , movie_year=?, movie_description=?, movie_image=?, genre_id=?  WHERE post_id = ?");
+                $slug = slug($title);
 
-                $query1->bindValue(1, $title);
-                $query1->bindValue(2, $year);
-                $query1->bindValue(3, $description);
-                $query1->bindValue(4, $file_name);
-                $query1->bindValue(5, $genre);
-                $query1->bindValue(6, $id);
+                $query1 = $db->prepare("UPDATE post SET movie_slug=?, movie_title=? , movie_year=?, movie_description=?, movie_image=?, genre_id=?  WHERE post_id = ?");
 
-                $query4 = $db->prepare("UPDATE genre SET post = post + 1 WHERE genre_id = $genre");
+                $query1->bindValue(1, $slug);
+                $query1->bindValue(2, $title);
+                $query1->bindValue(3, $year);
+                $query1->bindValue(4, $description);
 
-                $query4->execute();
+                if(empty($file_name)){
+                    $query1->bindValue(5, $old_img);
+                }
+                else{
+                    $query1->bindValue(5, $file_name);
+                }
+                
+                $query1->bindValue(6, $genre);
+                $query1->bindValue(7, $id);
+
                 $query1->execute();
+
+                if($_POST['delete'] == 'yes'){
+                    $img_del = $db->prepare("UPDATE post SET movie_image = '' WHERE post_id = $id");
+                    $img_del->execute();
+                }
+
+                if($genre !== $data['genre_id']){
+
+                    $genre_id = $data['genre_id'];
+
+                    $query5 = $db->prepare("UPDATE genre SET post = post - 1 WHERE genre_id = ?");
+                    $query5->bindValue(1, $genre_id);
+                    $query5->execute();
+
+                    $query4 = $db->prepare("UPDATE genre SET post = post + 1 WHERE genre_id = ?");
+                    $query4->bindValue(1, $genre);
+                    $query4->execute();
+                }
 
                 header("Location: update.php");
             }
@@ -107,8 +148,12 @@
             <input type="file" name="image" />  <br /> <br /> 
             <p><?= $data['movie_image'] ?></p>
             <img src="uploads/<?= $data['movie_image'] ?>" alt="<?= $data['movie_image'] ?>" height="150px" />
+            <?php if(!empty($data['movie_image'])): ?>
+            <input type="checkbox" name="delete" value="yes" />
+            <label>delete image?</label>
+            <?php endif ?>
             <br /> <br />
-            <input type="hidden" name="old_image"  value="<?= $data['movie_image'] ?>"/>
+            <input type="hidden" name="old_image" value="<?= $data['movie_image'] ?>"/>
             <input class="w3-button w3-green" type="submit" value="Update Review" />
         </form>
         <br /><br />
