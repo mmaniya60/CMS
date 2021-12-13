@@ -5,19 +5,30 @@
     include_once('includes/connect.php');
     include_once('includes/post.php');
 
-    if(isset($_GET['cid'])){
-        $cid = $_GET['cid'];
+    if(isset($_GET['cid'], $_GET['slug'])){
+        $cid = filter_input(INPUT_GET, 'cid', FILTER_VALIDATE_INT);
+		$slug = filter_input(INPUT_GET, 'slug', FILTER_SANITIZE_STRING);
+    	if (!$cid || !$slug || empty($cid) || empty($slug)) {
+        	header("HTTP/1.0 404 Not Found");
+        	exit;
+    	}
 
-        $query = $db->prepare("SELECT * FROM post WHERE genre_id = ? ORDER BY post_id DESC");
-        $query->bindValue(1, $cid);
-        $query->execute();
+		$query = $db->prepare("SELECT * FROM post JOIN genre ON post.genre_id = genre.genre_id WHERE post.genre_id = ? AND genre.genre_slug = ? ORDER BY post_id DESC");
+		$query->bindValue(1, $cid);
+		$query->bindValue(2, $slug);
+		$query->execute();
+		$posts = $query->fetchAll();
+		$num = $query->rowCount();
 
-        $posts = $query->fetchAll();
+		if($num == 0){
+			header("HTTP/1.0 404 Not Found");
+			exit;
+		}
 
-        $query1 = $db->prepare("SELECT * FROM genre WHERE post > 0");
+		$query1 = $db->prepare("SELECT * FROM genre WHERE post > 0");
+		$query1->execute();
+		$genres = $query1->fetchAll();
 
-        $query1->execute();
-        $genres = $query1->fetchAll();
     }
 
 	$value = '';
@@ -38,13 +49,19 @@
 		$value1 = 'Watchlist';
 		$action = 'admin/index.php';
 	}
+
+	$query2 = $db->prepare("SELECT * FROM genre WHERE genre_id = $cid");
+
+	$query2->execute();
+	$genres1 = $query2->fetch();
+
 ?>
 
 <!DOCTYPE html>
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Home - Movie CMS</title>
+	<title>Genre: <?= $genres1['genres'] ?></title>
 	<link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
@@ -55,8 +72,8 @@
         <div class="w3-dropdown-hover w3-mobile">
             <button class="w3-button">Genres <em class="fa fa-caret-down"></em></button>
             <div class="w3-dropdown-content w3-bar-block w3-black">
-                <?php foreach ($genres as $genre): ?>
-                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
+				<?php foreach ($genres as $genre): ?>
+                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>&slug=<?= $genre['genre_slug'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
                 <?php endforeach ?>
             </div>
 		</div>
@@ -68,24 +85,17 @@
 		<?php endif ?>
 	</div>
 
-    <form class="search" action="search.php?search=" method="get" autocomplete="off">
-		<input type="text" name="search" placeholder="Search...">
+    <form class="search" action="search.php" method="get" autocomplete="off">
+		<input type="text" name="search" placeholder="Search by Title...">
 		<button type="submit" class="w3-bar-item w3-button w3-green">Go</button>
 	</form>
-
-    <?php
-            $query1 = $db->prepare("SELECT * FROM genre WHERE genre_id = $cid");
-
-            $query1->execute();
-            $genres1 = $query1->fetch();
-    ?>
 
 	<div class="container">
 		<h1><b>Genre: <?= $genres1['genres'] ?></b></h1>
 		<ul style="list-style-type:none;">
 			<?php foreach ($posts as $post): ?>
 				<li>
-					<h2><a href="show.php?id=<?=$post['post_id']?>"><?= $post['movie_title'] ?></a></h2>
+					<h2><a href="show.php?id=<?=$post['post_id']?>&slug=<?=$post['movie_slug']?>"><?= $post['movie_title'] ?></a></h2>
 				</li>
 				<li>
                     <small>
