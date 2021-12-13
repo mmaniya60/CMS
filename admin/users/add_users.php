@@ -1,20 +1,23 @@
 <?php
     session_start();
 
-    include_once('../../includes/connect.php'); 
+    include_once('../../includes/connect.php');
     
     if(isset($_POST['save'])){
-        $name = $_POST['name'];
-        $username = $_POST['user'];
-        $password = $_POST['password'];
-        $password1 = $_POST['password1'];
-        $email = $_POST['email'];
+        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        $username = filter_input(INPUT_POST, 'user', FILTER_SANITIZE_STRING);
+        $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
+        $password1 = filter_input(INPUT_POST, 'password1', FILTER_SANITIZE_STRING);
+        $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
 
         if(empty($name) || empty($username) || empty($password) || empty($password1) || empty($email)){
             $error = "All fields are required!";
         }
         else if($password != $password1){
             $error = "Password does not match!";
+        }
+        else if(filter_var($email, FILTER_VALIDATE_EMAIL) === false){
+            $error = "Incorrect email format! Please retry.";
         }
         else{
 
@@ -55,6 +58,9 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
 <body>
+    <div class="w3-top w3-black">
+		<a href="../../index.php" class="w3-bar-item w3-button">Home</a>
+	</div>
     
     <div class="container">
         <h2>User Sign In</h2>
