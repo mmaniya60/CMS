@@ -3,6 +3,7 @@
     session_start();
 
 	include_once('../includes/connect.php');
+    include_once('../includes/post.php');
 
     $query = $db->prepare("SELECT * FROM genre");
     $query->execute();
@@ -11,9 +12,10 @@
     if(isset($_SESSION['logged_in'])){
 
         if(isset($_POST['title'], $_POST['year'], $_POST['description'])){
-            $title = $_POST['title'];
-            $description = $_POST['description'];
-            $year = $_POST['year'];
+            $title = filter_input(INPUT_POST, 'title', FILTER_SANITIZE_STRING);
+            $description = $_POST['description']; //Can not validate due to the use of WYSIWYG
+            $year = filter_var($_POST['year'], FILTER_VALIDATE_INT, array("options"=> array("min_range"=>0000, "max_range"=> date('Y'))));
+            $genre = filter_input(INPUT_POST, 'genre', FILTER_VALIDATE_INT);
 
             if(isset($_FILES['image'])){
                 $file_name = $_FILES['image']['name'];
@@ -34,22 +36,26 @@
             else if(in_array($file_ext, $extensions) === false){
                 $error = "File extension is not allowed, Please choose an image with JPG or PNG extension.";
             }
+            else if ($year === false) {
+                $error = "Movie Year is invalid!";
+            }
             else{
 
-                $query = $db->prepare("INSERT INTO post (genre_id, movie_title, movie_year, movie_description, movie_image, posted_by) VALUES (?, ?, ?, ?, ?, ?);");
+                $slug = slug($title);
 
-                $query->bindValue(1, $_POST['genre']);
-                $query->bindValue(2, $title);
-                $query->bindValue(3, $year);
-                $query->bindValue(4, $description);
-                $query->bindValue(5, $file_name);
-                $query->bindValue(6, $_SESSION['logged_in']);
+                $query = $db->prepare("INSERT INTO post (movie_slug, genre_id, movie_title, movie_year, movie_description, movie_image, posted_by) VALUES (?, ?, ?, ?, ?, ?, ?);");
+
+                $query->bindValue(1, $slug);
+                $query->bindValue(2, $genre);
+                $query->bindValue(3, $title);
+                $query->bindValue(4, $year);
+                $query->bindValue(5, $description);
+                $query->bindValue(6, $file_name);
+                $query->bindValue(7, $_SESSION['logged_in']);
+                $query->execute();
 
                 $query1 = $db->prepare("UPDATE genre SET post = post + 1 WHERE genre_id = ?");
                 $query1->bindValue(1, $_POST['genre']);
-
-
-                $query->execute();
                 $query1->execute();
 
                 header("Location: index.php");
