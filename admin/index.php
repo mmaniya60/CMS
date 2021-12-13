@@ -75,8 +75,8 @@
     }
     else{
             if(isset($_POST['username']) && isset($_POST['password'])){
-                $username = $_POST['username'];
-                $password = $_POST['password'];
+                $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+                $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
 
                 if(empty($username) || empty($password)){
                     $error = "All fields are required!";
@@ -118,6 +118,10 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
 <body>
+    <div class="w3-top w3-black">
+		<a href="../index.php" class="w3-bar-item w3-button">Home</a>
+	</div>
+
     <div class="container">
         <h2>Enter Login Information:</h2><br>
         <?php if(isset($error)): ?>
