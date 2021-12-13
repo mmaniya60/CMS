@@ -9,14 +9,17 @@
 
     if(isset($_SESSION['logged_in'])){
         if(isset($_GET['id'])){
-            $id = $_GET['id'];
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if (!$id || empty($id)) {
+                echo '<script>alert("Incorrect has been ID passed!!!")</script>';
+                exit;
+            }
             
             $query = $db->prepare("SELECT * FROM post WHERE post_id = ?");
             $query->bindValue(1, $id);
             $query->execute();
-
-            header("Location: delete.php");
         }
+        
         $posts = $post->fetch_all();
 
 ?>
@@ -38,7 +41,7 @@
 	</div>
     
     <div class="container">
-        <h2>Delete a Movie Review </h2><br />
+        <h2>Update a Movie Review </h2><br />
         <?php if(isset($error)): ?>
             <div class="w3-panel w3-red">
                 <h3>Error Found!</h3>
