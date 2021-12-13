@@ -3,18 +3,22 @@
     session_start();
 
 	include_once('../includes/connect.php');
+    include_once('../includes/post.php');
 
     if(isset($_SESSION['logged_in'])){
 
         if(isset($_POST['genre'])){
-            $genre = $_POST['genre'];
+            $genre = filter_input(INPUT_POST, 'genre', FILTER_SANITIZE_STRING);
 
             if(empty($genre)){
                 $error = "Field is required!";
             }
             else{
-                $query = $db->prepare("INSERT INTO genre (genres) VALUES (?);");
+
+                $slug = slug($genre);
+                $query = $db->prepare("INSERT INTO genre (genres, genre_slug) VALUES (?, ?);");
                 $query->bindValue(1, $genre);
+                $query->bindValue(2, $slug);
 
                 $query->execute();
 
@@ -29,7 +33,7 @@
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Add Review</title>
+	<title>Add Genre</title>
 	<link rel="stylesheet" href="../styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
