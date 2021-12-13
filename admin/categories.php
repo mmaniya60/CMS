@@ -15,7 +15,7 @@
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Add Review</title>
+	<title>Manage Categories</title>
 	<link rel="stylesheet" href="../styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
