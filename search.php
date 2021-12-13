@@ -4,14 +4,28 @@
 	include_once('includes/connect.php');
 	include_once('includes/post.php');
 
-	$limit = 2;
+    $limit = 2;
 
     if(isset($_GET['search']) && isset($_GET['page'])){
-        $search = $_GET['search'];
-        $page = $_GET['page'];
+        $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
+    	if (!$search || empty($search)) {
+        	header($header);
+        	exit;
+    	}
+        
+        $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
+    	if (!$page || empty($page)) {
+        	header($header);
+        	exit;
+    	}
     }
     else{
-        $search = $_GET['search'];
+        $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
+    	if (!$search || empty($search)) {
+        	header($header);
+        	exit;
+    	}
+        
         $page = 1;
     }
 
@@ -21,12 +35,6 @@
     $post = new Post;
     $posts = $post->fetch_search_term($search, $offset, $limit);
 
-    if(isset($_GET['search'])){
-        $search = $_GET['search'];
-
-        $post = new Post;
-        $posts = $post->fetch_search_term($search);
-    }
 
     if($posts == null){
         $error = "No page found with a title <i>'$search'</i>";
@@ -65,7 +73,7 @@
 <html lang=en>
 <head>
 	<meta charset="utf-8">
-	<title>Home - Movie CMS</title>
+	<title>Movie CMS - <?= $search ?></title>
 	<link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
@@ -77,7 +85,7 @@
             <button class="w3-button">Genres <em class="fa fa-caret-down"></em></button>
             <div class="w3-dropdown-content w3-bar-block w3-black">
                 <?php foreach ($genres as $genre): ?>
-                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
+                    <a href="categories.php?cid=<?= $genre['genre_id'] ?>&slug=<?= $genre['genre_slug'] ?>" class="w3-bar-item w3-button w3-mobile" ><?= $genre['genres'] ?></a>
                 <?php endforeach ?>
             </div>
 		</div>
@@ -89,8 +97,8 @@
 		<?php endif ?>
 	</div>
 
-    <form class="search" action="search.php?search=" method="get" autocomplete="off">
-		<input type="text" name="search" placeholder="Search...">
+    <form class="search" action="search.php" method="get" autocomplete="off">
+		<input type="text" name="search" placeholder="Search by Title...">
 		<button type="submit" class="w3-bar-item w3-button w3-green">Go</button>
 	</form>
     
@@ -103,7 +111,7 @@
             <ul style="list-style-type:none;">
                 <?php foreach ($posts as $post): ?>
                     <li>
-                        <h2><a href="show.php?id=<?=$post['post_id']?>"><?= $post['movie_title'] ?></a></h2>
+                        <h2><a href="show.php?id=<?=$post['post_id']?>&slug=<?=$post['movie_slug']?>"><?= $post['movie_title'] ?></a></h2>
                     </li>
                     <li>
                         <small>
@@ -127,8 +135,8 @@
             </ul>
         <?php endif ?>
 	</div>
-	
-	<?php
+
+    <?php
 
         $search = $_GET['search'];
         $query1 = $db->prepare("SELECT * FROM post
@@ -175,6 +183,5 @@
         }
 
     ?>
-	
 </body>
 </html>
