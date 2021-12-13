@@ -9,21 +9,26 @@
 
     if(isset($_SESSION['logged_in'])){
         if(isset($_GET['id'])){
-            $id = $_GET['id'];
-            $cid = $_GET['cid'];
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if (!$id || empty($id)) {
+                echo '<script>alert("Incorrect has been ID passed!!!")</script>';
+                exit;
+            }
 
-            $query1 = $db->prepare("SELECT movie_image FROM post WHERE post_id = ?");
+            $query1 = $db->prepare("SELECT * FROM post WHERE post_id = ?");
             $query1->bindValue(1, $id);
             $query1->execute();
-            $images = $query1->fetch();
-            unlink("uploads/".$images);
+            $post = $query1->fetch();
+            unlink("uploads/".$post['movie_image']);
 
             $query = $db->prepare("DELETE FROM post WHERE post_id = ?");
             $query->bindValue(1, $id);
             $query->execute();
 
+            
+
             $sql = $db->prepare("UPDATE genre SET post = post - 1 WHERE genre_id = ?");
-            $sql->bindValue(1, $cid);
+            $sql->bindValue(1, $post['genre_id']);
             $sql->execute();
 
             $query1 = $db->prepare("DELETE FROM comment WHERE post_id = ?");
